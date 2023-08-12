@@ -50,4 +50,4 @@ def init_db():
 if __name__ == '__main__':
     init_db()
 
-## parei aos 18h46 na criação do arquivo chamado utils.py
+
