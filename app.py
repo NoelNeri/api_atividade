@@ -1,12 +1,20 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
-from model import Pessoas, Atividades
+from model import Pessoas, Atividades, Usuarios
+from flask_httpauth import HTTPBasicAuth
 
+auth = HTTPBasicAuth()
 app = Flask(__name__)
 api = Api(app)
 
+@auth.verify_password
+def verificacao(login, senha):
+    if not (login, senha):
+        return False
+    return Usuarios.query.filter_by(login=login, senha=senha).first()
 
 class Pessoa(Resource):
+    @auth.login_required()
     def get(self, nome):
         pessoa = Pessoas.query.filter_by(nome=nome).first()
         try:
@@ -45,6 +53,7 @@ class Pessoa(Resource):
         return response
 
 class ListaPessoas(Resource):
+    @auth.login_required()
     def get(self):
         pessoas = Pessoas.query.all()
         response = [{'id':i.id, 'nome':i.nome, 'idade':i.idade} for i in pessoas]
@@ -62,6 +71,7 @@ class ListaPessoas(Resource):
         return response
 
 class ListaAtividades(Resource):
+    @auth.login_required()
     def get(self):
         atividades = Atividades.query.all()
         response = [{'id':i.id, 'nome':i.nome, 'pessoa':i.pessoa_id} for i in atividades]
@@ -78,6 +88,17 @@ class ListaAtividades(Resource):
             'id': atividade.id
         }
         return response
+
+    def delete(self, nome):
+        atividade = Atividades.query.filter_by(id=id).first()
+        atividade.delete()
+        mensagem = 'Atividade numero {} excluida com sucesso!'.format(atividade.id)
+        response = {
+                'status': 'Sucesso!',
+                'mensagem': mensagem
+            }
+        return response
+
 
 api.add_resource(Pessoa, '/pessoa/<string:nome>/')
 api.add_resource(ListaPessoas, '/lista/')
